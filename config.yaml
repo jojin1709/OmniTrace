@@ -1,0 +1,51 @@
+# OmniTrace Configuration
+# Copy config/keys.example.yaml to config/keys.yaml and fill in your free API keys.
+
+keys_file: config/keys.yaml
+
+engine:
+  mode: deep # quick, normal, deep
+  max_threads: 50 # Parallel threads
+  timeout: 10 # Request timeout
+  max_results_per_source: 100
+  cache_results: true
+  cache_ttl: 86400 # 24 hours
+
+face:
+  similarity_threshold: 0.6 # Lower = more matches, higher = stricter
+  max_faces_to_search: 20
+  recursive_search: true # Search faces found in results
+  recursive_depth: 2
+
+social:
+  platforms: all # all, social, dating, professional, news
+  scrape_profiles: true # Scrape full profile data
+  download_photos: true
+  max_photos_per_profile: 50
+
+username:
+  platforms_file: data/platform_list.json # 500+ platforms
+  check_all: true
+  thread_count: 100
+
+breach:
+  local_databases_path: ./data/breach_dumps/
+  check_password_reuse: true
+  export_credentials: false
+
+output:
+  default_format: html # html, pdf, json, console
+  interactive_graph: true
+  include_raw_data: false
+  max_photos_in_report: 100
+
+darkweb:
+  tor_proxy: socks5://127.0.0.1:9050
+  search_timeout: 30
+  max_pages_per_site: 50
+
+api:
+  host: 0.0.0.0
+  port: 5000
+  debug: false
+  rate_limit: 100 # Requests per minute

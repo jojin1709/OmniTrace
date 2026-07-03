@@ -1,0 +1,77 @@
+# OmniTrace API Keys & Services Configuration
+# Get free keys from the links below, then paste them here.
+
+services:
+  haveibeenpwned:
+    # Free tier: 1 request per every 1.5 seconds
+    # Sign up: https://haveibeenpwned.com/API/Key
+    api_key: ""
+    enabled: false
+
+  google_custom_search:
+    # Free tier: 100 queries/day
+    # Get key: https://developers.google.com/custom-search/v1/overview
+    api_key: ""
+    cse_id: ""
+    enabled: false
+
+  bing_search:
+    # Free tier: 1,000 transactions/month
+    # Get key: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
+    api_key: ""
+    enabled: false
+
+  gravatar:
+    # Free, no key needed (uses email hash)
+    enabled: true
+
+  nominatim:
+    # Free, no key needed (respect rate limits: 1 req/sec)
+    # https://nominatim.org/release-docs/latest/api/Introduction/
+    enabled: true
+    user_agent: "OmniTrace/1.0"
+
+  phonenumbers:
+    # Free lib, no key needed
+    enabled: true
+
+  whois:
+    # Free lib, no key needed
+    enabled: true
+
+  shodan:
+    # Free tier: limited queries
+    # Get key: https://account.shodan.io/register
+    api_key: ""
+    enabled: false
+
+  virustotal:
+    # Free tier: 4 req/min
+    # Get key: https://www.virustotal.com/gui/join-us
+    api_key: ""
+    enabled: false
+
+  clearbit:
+    # Free tier: 50 lookups/month
+    # Get key: https://clearbit.com/
+    api_key: ""
+    enabled: false
+
+  hunter_io:
+    # Free tier: 25 lookups/month
+    # Get key: https://hunter.io/users/sign_up
+    api_key: ""
+    enabled: false
+
+  twilio:
+    # Free trial credit (~$15)
+    # Get key: https://www.twilio.com/try-twilio
+    account_sid: ""
+    auth_token: ""
+    enabled: false
+
+  open_cage:
+    # Free tier: 2,500 req/day
+    # Get key: https://opencagedata.com/api
+    api_key: ""
+    enabled: false
