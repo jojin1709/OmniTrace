@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OmniTrace — Universal Identity &amp; Location Trace Engine</title>
+<meta name="description" content="OmniTrace is a modular OSINT identity correlation engine. Trace a name, username, email, phone, or photo across the web and build a full dossier. Developed by JOJIN JOHN.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e14; --bg-2:#0f1520; --bg-3:#141b28; --card:#111825;
+    --border:#1e2a3d; --border-2:#26364f;
+    --txt:#e6edf6; --txt-2:#9fb0c6; --txt-3:#6b7d97;
+    --accent:#38e1c4; --accent-2:#6d7bff; --accent-3:#c264ff;
+    --danger:#ff5d6c; --warn:#ffb454; --ok:#4be38a;
+    --grad:linear-gradient(120deg,#38e1c4,#6d7bff 55%,#c264ff);
+    --radius:14px; --shadow:0 12px 40px rgba(0,0,0,.45);
+    --sidebar:270px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:24px}
+  body{background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:rgba(109,123,255,.35)}
+  code,pre{font-family:'JetBrains Mono',ui-monospace,monospace}
+
+  /* Background glow */
+  body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(700px 500px at 15% -5%,rgba(56,225,196,.10),transparent 60%),
+      radial-gradient(700px 500px at 100% 0%,rgba(194,100,255,.10),transparent 55%),
+      radial-gradient(900px 700px at 50% 110%,rgba(109,123,255,.08),transparent 60%);}
+
+  /* Layout */
+  .layout{display:flex;min-height:100vh}
+  .sidebar{width:var(--sidebar);flex:0 0 var(--sidebar);position:sticky;top:0;height:100vh;overflow-y:auto;
+    border-right:1px solid var(--border);background:rgba(10,14,20,.7);backdrop-filter:blur(10px);padding:26px 18px}
+  .main{flex:1;min-width:0}
+  .content{max-width:920px;margin:0 auto;padding:0 28px 120px}
+
+  /* Sidebar */
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;margin-bottom:4px}
+  .brand .logo{width:34px;height:34px;border-radius:9px;background:var(--grad);display:grid;place-items:center;font-size:18px;box-shadow:0 6px 18px rgba(109,123,255,.4)}
+  .brand-sub{color:var(--txt-3);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;margin:2px 0 22px 44px}
+  .nav-group{margin-bottom:18px}
+  .nav-group h4{color:var(--txt-3);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;margin:0 0 8px 10px}
+  .nav a{display:block;padding:7px 12px;border-radius:9px;color:var(--txt-2);font-size:.9rem;font-weight:500;transition:.15s;border:1px solid transparent}
+  .nav a:hover{color:var(--txt);background:var(--bg-3)}
+  .nav a.active{color:var(--txt);background:linear-gradient(90deg,rgba(56,225,196,.14),rgba(109,123,255,.10));border-color:var(--border-2)}
+  .side-foot{margin-top:26px;padding:14px 12px;border-top:1px solid var(--border);color:var(--txt-3);font-size:.78rem}
+  .side-foot b{color:var(--txt-2)}
+
+  /* Hero */
+  .hero{padding:70px 0 40px;text-align:center}
+  .badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+  .badge{font-size:.72rem;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid var(--border-2);background:var(--bg-3);color:var(--txt-2)}
+  .hero h1{font-size:clamp(2.4rem,6vw,4rem);font-weight:800;line-height:1.05;letter-spacing:-.02em;margin-bottom:16px}
+  .hero h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.lead{color:var(--txt-2);font-size:1.15rem;max-width:640px;margin:0 auto 14px}
+  .by{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:7px 16px;border-radius:999px;border:1px solid var(--border-2);background:var(--bg-3);font-size:.85rem;color:var(--txt-2)}
+  .by b{color:var(--txt)}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:11px;font-weight:600;font-size:.95rem;transition:.18s;border:1px solid var(--border-2);cursor:pointer}
+  .btn.primary{background:var(--grad);color:#08111a;border:none;box-shadow:0 10px 30px rgba(109,123,255,.35)}
+  .btn.primary:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(109,123,255,.5)}
+  .btn.ghost{background:var(--bg-3);color:var(--txt)}
+  .btn.ghost:hover{border-color:var(--accent);color:#fff}
+
+  /* Sections */
+  section{padding-top:64px}
+  section > h2{font-size:1.75rem;font-weight:800;letter-spacing:-.01em;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+  section > h2::before{content:"";width:5px;height:26px;border-radius:4px;background:var(--grad)}
+  section > p.sec-lead{color:var(--txt-2);margin-bottom:24px;max-width:720px}
+  h3{font-size:1.1rem;margin:26px 0 12px;font-weight:700;color:var(--txt)}
+
+  /* Cards / grid */
+  .grid{display:grid;gap:16px}
+  .grid.f3{grid-template-columns:repeat(3,1fr)}
+  .grid.f2{grid-template-columns:repeat(2,1fr)}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:.2s}
+  .card:hover{border-color:var(--border-2);transform:translateY(-3px);box-shadow:var(--shadow)}
+  .card .ic{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-size:20px;margin-bottom:12px;
+    background:linear-gradient(135deg,rgba(56,225,196,.16),rgba(109,123,255,.16));border:1px solid var(--border-2)}
+  .card h4{font-size:1rem;margin-bottom:6px}
+  .card p{color:var(--txt-2);font-size:.88rem}
+
+  /* Code */
+  .code{position:relative;background:#060a10;border:1px solid var(--border);border-radius:12px;margin:14px 0;overflow:hidden}
+  .code .bar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--bg-2);border-bottom:1px solid var(--border)}
+  .code .bar .dots{display:flex;gap:6px}
+  .code .bar .dots i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .code .bar .dots i:nth-child(1){background:#ff5f57}.code .bar .dots i:nth-child(2){background:#febc2e}.code .bar .dots i:nth-child(3){background:#28c840}
+  .code .bar .lbl{color:var(--txt-3);font-size:.74rem;font-family:'JetBrains Mono'}
+  .copy{background:var(--bg-3);border:1px solid var(--border-2);color:var(--txt-2);font-size:.72rem;padding:4px 10px;border-radius:7px;cursor:pointer;transition:.15s;font-family:'Inter'}
+  .copy:hover{color:#fff;border-color:var(--accent)}
+  .copy.done{color:var(--ok);border-color:var(--ok)}
+  pre{padding:16px 18px;overflow-x:auto;font-size:.84rem;line-height:1.7}
+  pre code{color:#cfe3f5}
+  .tok-c{color:var(--txt-3)}         /* comment */
+  .tok-cmd{color:var(--accent)}       /* command / python */
+  .tok-sub{color:var(--accent-3);font-weight:500} /* subcommand */
+  .tok-flag{color:var(--warn)}        /* --flags */
+  .tok-str{color:#8ee7a6}             /* strings */
+
+  /* Tables */
+  .tbl{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:.9rem;overflow:hidden;border-radius:12px;border:1px solid var(--border)}
+  .tbl th,.tbl td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--border)}
+  .tbl th{background:var(--bg-2);color:var(--txt-2);font-weight:600;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl td:first-child{font-family:'JetBrains Mono';color:var(--accent);white-space:nowrap}
+  .tbl tr:hover td{background:rgba(109,123,255,.05)}
+
+  /* Callouts */
+  .note{border-radius:12px;padding:16px 18px;margin:18px 0;font-size:.9rem;border:1px solid;display:flex;gap:12px}
+  .note .ni{font-size:1.15rem;line-height:1.4}
+  .note.info{background:rgba(56,225,196,.07);border-color:rgba(56,225,196,.3)}
+  .note.warn{background:rgba(255,93,108,.07);border-color:rgba(255,93,108,.3)}
+  .note b{color:#fff}
+
+  /* Architecture / flow */
+  .flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:8px 0}
+  .flow .step{width:100%;max-width:560px;background:var(--card);border:1px solid var(--border-2);border-radius:12px;padding:16px 20px;text-align:center}
+  .flow .step b{display:block;font-size:1rem;margin-bottom:2px}
+  .flow .step span{color:var(--txt-2);font-size:.84rem}
+  .flow .arrow{color:var(--accent-2);font-size:1.4rem;line-height:1;padding:8px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+  .chip{font-size:.76rem;padding:5px 11px;border-radius:999px;background:var(--bg-3);border:1px solid var(--border);color:var(--txt-2)}
+
+  /* Endpoint pills */
+  .method{display:inline-block;font-family:'JetBrains Mono';font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:6px;margin-right:8px}
+  .method.get{background:rgba(75,227,138,.15);color:var(--ok)}
+  .method.post{background:rgba(109,123,255,.18);color:#9aa6ff}
+
+  footer{border-top:1px solid var(--border);margin-top:80px;padding:34px 0;text-align:center;color:var(--txt-3);font-size:.86rem}
+  footer b{color:var(--txt)}
+  footer .heart{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+
+  /* Mobile */
+  .menu-btn{display:none;position:fixed;top:14px;left:14px;z-index:50;background:var(--bg-3);border:1px solid var(--border-2);color:var(--txt);width:42px;height:42px;border-radius:10px;font-size:20px;cursor:pointer}
+  .backdrop{display:none}
+  @media(max-width:960px){
+    .grid.f3{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:760px){
+    .menu-btn{display:block}
+    .sidebar{position:fixed;left:0;top:0;z-index:40;transform:translateX(-100%);transition:.25s;box-shadow:var(--shadow)}
+    .sidebar.open{transform:translateX(0)}
+    .backdrop.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30}
+    .content{padding:0 18px 100px}
+    .grid.f3,.grid.f2{grid-template-columns:1fr}
+    .hero{padding:64px 0 30px}
+  }
+</style>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+<div class="backdrop" id="backdrop"></div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="logo">🕵️</span> OmniTrace</div>
+    <div class="brand-sub">by Jojin John</div>
+    <nav class="nav">
+      <div class="nav-group">
+        <h4>Getting Started</h4>
+        <a href="#overview">Overview</a>
+        <a href="#features">Features</a>
+        <a href="#install">Installation</a>
+      </div>
+      <div class="nav-group">
+        <h4>Usage</h4>
+        <a href="#commands">CLI Commands</a>
+        <a href="#api">REST API</a>
+        <a href="#livedata">Live Data / Keys</a>
+      </div>
+      <div class="nav-group">
+        <h4>Reference</h4>
+        <a href="#architecture">Architecture</a>
+        <a href="#confidence">Confidence Scoring</a>
+        <a href="#structure">Project Structure</a>
+        <a href="#ethics">Ethical Use</a>
+        <a href="#license">License</a>
+      </div>
+    </nav>
+    <div class="side-foot">
+      <b>OmniTrace v1.0.0</b><br>MIT License · © 2026<br>Developed by <b>Jojin John</b>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="content">
+
+      <!-- HERO -->
+      <header class="hero" id="top">
+        <div class="badges">
+          <span class="badge">v1.0.0</span>
+          <span class="badge">Python 3.9+</span>
+          <span class="badge">MIT License</span>
+          <span class="badge">OSINT Toolkit</span>
+        </div>
+        <h1>Trace any identity.<br><span class="g">Build the full picture.</span></h1>
+        <p class="lead">OmniTrace is a modular OSINT correlation engine. Feed it a name, username, email, phone, or photo — it runs every applicable module, correlates the results, scores confidence, and produces a complete dossier.</p>
+        <div class="by">👤 Developed by <b>JOJIN JOHN</b></div>
+        <div class="cta">
+          <a class="btn primary" href="https://github.com/jojin1709/OmniTrace" target="_blank" rel="noopener">⭐ View on GitHub</a>
+          <a class="btn ghost" href="#install">Get Started →</a>
+        </div>
+      </header>
+
+      <!-- OVERVIEW -->
+      <section id="overview">
+        <h2>Overview</h2>
+        <p class="sec-lead">One input in, a correlated intelligence dossier out. OmniTrace classifies your input, fans out across specialised modules, merges everything into an identity graph, and renders a report in the format you choose.</p>
+        <div class="note info"><span class="ni">ℹ️</span><div><b>Works instantly.</b> OmniTrace ships with realistic <b>demo data</b>, so every command runs with zero setup. Add API keys in <code>config/keys.yaml</code> to switch modules to <b>live</b> results.</div></div>
+        <div class="grid f3">
+          <div class="card"><div class="ic">🎯</div><h4>Any Input</h4><p>Name, username, email, phone, or photo — even a combination for stronger correlation.</p></div>
+          <div class="card"><div class="ic">🧩</div><h4>15+ Modules</h4><p>Social, breach, face, phone, email, crypto, dark web, network, documents and more.</p></div>
+          <div class="card"><div class="ic">🕸️</div><h4>Identity Graph</h4><p>All findings are linked into a relationship graph with per-finding confidence scores.</p></div>
+          <div class="card"><div class="ic">📄</div><h4>4 Report Formats</h4><p>Console, JSON, interactive HTML, or PDF dossiers — pick what fits your workflow.</p></div>
+          <div class="card"><div class="ic">🌐</div><h4>CLI + REST API</h4><p>Use it from the terminal, or run the Flask server with a web dashboard.</p></div>
+          <div class="card"><div class="ic">🔑</div><h4>Live or Demo</h4><p>Plug in API keys for real data; otherwise everything runs on built-in mock data.</p></div>
+        </div>
+      </section>
+
+      <!-- FEATURES -->
+      <section id="features">
+        <h2>Capabilities</h2>
+        <p class="sec-lead">Every module is wired into the pipeline and callable on its own from the CLI.</p>
+        <table class="tbl">
+          <tr><th>Module</th><th>What it does</th></tr>
+          <tr><td>username</td><td>Check a username across many platforms simultaneously</td></tr>
+          <tr><td>social</td><td>Facebook, Instagram, Twitter, LinkedIn, TikTok, Reddit, GitHub, YouTube, Pinterest, Snapchat</td></tr>
+          <tr><td>email_intel</td><td>Format validation, Gravatar, breach lookup, linked accounts</td></tr>
+          <tr><td>phone</td><td>Carrier, line type, location, messaging-app presence, spam score</td></tr>
+          <tr><td>breach</td><td>Emails, usernames & password-reuse across breach data</td></tr>
+          <tr><td>face</td><td>Match a face across platforms + reverse image search</td></tr>
+          <tr><td>image</td><td>EXIF (GPS/camera/date), OCR on signs, object detection</td></tr>
+          <tr><td>location</td><td>Identify a place from a photo (landmarks, signs)</td></tr>
+          <tr><td>darkweb</td><td>Search dark-web mentions of a target</td></tr>
+          <tr><td>crypto</td><td>Trace BTC / ETH addresses and find linked wallets</td></tr>
+          <tr><td>network</td><td>WHOIS, DNS enumeration, IP reputation</td></tr>
+          <tr><td>document</td><td>Metadata extraction and steganography checks</td></tr>
+        </table>
+      </section>
+
+      <!-- INSTALL -->
+      <section id="install">
+        <h2>Installation</h2>
+        <p class="sec-lead">Requires Python 3.9+. All commands work immediately with demo data — no keys needed.</p>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">bash</span><button class="copy">Copy</button></div>
+<pre><code><span class="tok-c"># 1. Clone the repository</span>
+git clone https://github.com/jojin1709/OmniTrace.git
+cd OmniTrace
+
+<span class="tok-c"># 2. Install dependencies</span>
+pip install -r requirements.txt
+
+<span class="tok-c"># 3. (Optional) Add API keys for live data</span>
+cp config/keys.example.yaml config/keys.yaml
+<span class="tok-c"># ...then edit config/keys.yaml</span></code></pre>
+        </div>
+      </section>
+
+      <!-- COMMANDS -->
+      <section id="commands">
+        <h2>CLI Commands</h2>
+        <p class="sec-lead">Every command below works out of the box. Add <code>--help</code> to any command for its full options.</p>
+
+        <h3>🔍 Identity Trace</h3>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">bash</span><button class="copy">Copy</button></div>
+<pre><code><span class="tok-c"># Trace by a single input</span>
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--name</span> <span class="tok-str">"John Doe"</span>
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--username</span> johndoe
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--email</span> john@example.com
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--phone</span> +1234567890
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--photo</span> ./photo.jpg
+
+<span class="tok-c"># Multiple inputs = best correlation</span>
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--name</span> <span class="tok-str">"John Doe"</span> <span class="tok-flag">--username</span> johndoe <span class="tok-flag">--email</span> john@example.com
+
+<span class="tok-c"># Scan depth + relationship graph</span>
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--name</span> <span class="tok-str">"John Doe"</span> <span class="tok-flag">--mode</span> deep <span class="tok-flag">--graph</span></code></pre>
+        </div>
+
+        <h3>📄 Output Formats</h3>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">bash</span><button class="copy">Copy</button></div>
+<pre><code>python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--name</span> <span class="tok-str">"John Doe"</span> <span class="tok-flag">--output</span> console
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--name</span> <span class="tok-str">"John Doe"</span> <span class="tok-flag">--output</span> json
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--name</span> <span class="tok-str">"John Doe"</span> <span class="tok-flag">--output</span> html <span class="tok-flag">--file</span> dossier.html
+python cli.py <span class="tok-sub">trace</span> <span class="tok-flag">--name</span> <span class="tok-str">"John Doe"</span> <span class="tok-flag">--output</span> pdf</code></pre>
+        </div>
+
+        <h3>👤 Username · ✉️ Email · 📞 Phone</h3>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">bash</span><button class="copy">Copy</button></div>
+<pre><code>python cli.py <span class="tok-sub">check-username</span> <span class="tok-flag">--username</span> johndoe
+python cli.py <span class="tok-sub">check-username</span> <span class="tok-flag">--usernames-file</span> usernames.txt
+
+python cli.py <span class="tok-sub">investigate-email</span> <span class="tok-flag">--email</span> john@example.com <span class="tok-flag">--breaches</span> <span class="tok-flag">--social</span> <span class="tok-flag">--gravatar</span>
+
+python cli.py <span class="tok-sub">investigate-phone</span> <span class="tok-flag">--phone</span> +1234567890 <span class="tok-flag">--carrier</span> <span class="tok-flag">--social</span> <span class="tok-flag">--reputation</span></code></pre>
+        </div>
+
+        <h3>🛡️ Breach · 🌍 Social · 📍 Place</h3>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">bash</span><button class="copy">Copy</button></div>
+<pre><code>python cli.py <span class="tok-sub">search-breaches</span> <span class="tok-flag">--email</span> john@example.com
+python cli.py <span class="tok-sub">search-breaches</span> <span class="tok-flag">--password</span> <span class="tok-str">"password123"</span>   <span class="tok-c"># reuse detection</span>
+
+python cli.py <span class="tok-sub">search-social</span> <span class="tok-flag">--name</span> <span class="tok-str">"John Doe"</span> <span class="tok-flag">--platform</span> linkedin
+
+python cli.py <span class="tok-sub">identify-place</span> <span class="tok-flag">--photo</span> ./building.jpg <span class="tok-flag">--details</span> <span class="tok-flag">--map</span></code></pre>
+        </div>
+
+        <h3>🕶️ Dark Web · 🪙 Crypto · 📑 Documents</h3>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">bash</span><button class="copy">Copy</button></div>
+<pre><code>python cli.py <span class="tok-sub">search-darkweb</span> <span class="tok-flag">--name</span> <span class="tok-str">"John Doe"</span>
+python cli.py <span class="tok-sub">monitor-darkweb</span> <span class="tok-flag">--email</span> john@example.com <span class="tok-flag">--continuous</span> <span class="tok-flag">--interval</span> 24h
+
+python cli.py <span class="tok-sub">trace-crypto</span> <span class="tok-flag">--btc</span> 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+python cli.py <span class="tok-sub">trace-crypto</span> <span class="tok-flag">--eth</span> 0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18
+
+python cli.py <span class="tok-sub">analyze-document</span> <span class="tok-flag">--file</span> document.pdf
+python cli.py <span class="tok-sub">analyze-document</span> <span class="tok-flag">--file</span> image.png <span class="tok-flag">--stego</span></code></pre>
+        </div>
+
+        <h3>🌐 Network Intelligence</h3>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">bash</span><button class="copy">Copy</button></div>
+<pre><code>python cli.py <span class="tok-sub">whois</span> <span class="tok-flag">--domain</span> example.com
+python cli.py <span class="tok-sub">dns-enum</span> <span class="tok-flag">--domain</span> example.com
+python cli.py <span class="tok-sub">ip-reputation</span> <span class="tok-flag">--ip</span> 1.2.3.4</code></pre>
+        </div>
+      </section>
+
+      <!-- API -->
+      <section id="api">
+        <h2>REST API &amp; Dashboard</h2>
+        <p class="sec-lead">Run the Flask server to expose a JSON API and an interactive web dashboard.</p>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">bash</span><button class="copy">Copy</button></div>
+<pre><code><span class="tok-c"># Start the server (either works)</span>
+python api.py
+python web/dashboard.py
+
+<span class="tok-c"># → open http://localhost:5000/dashboard</span>
+
+<span class="tok-c"># JSON trace via curl</span>
+curl -X POST http://localhost:5000/trace \
+  -H <span class="tok-str">"Content-Type: application/json"</span> \
+  -d <span class="tok-str">'{"name": "John Doe", "email": "john@example.com"}'</span></code></pre>
+        </div>
+        <table class="tbl">
+          <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+          <tr><td>/</td><td><span class="method get">GET</span></td><td>Web dashboard</td></tr>
+          <tr><td>/dashboard</td><td><span class="method get">GET</span></td><td>Web dashboard</td></tr>
+          <tr><td>/trace</td><td><span class="method post">POST</span></td><td>Full trace (JSON body or multipart photo)</td></tr>
+          <tr><td>/check-username</td><td><span class="method post">POST</span></td><td>Username check</td></tr>
+          <tr><td>/identify-place</td><td><span class="method post">POST</span></td><td>Place identification</td></tr>
+          <tr><td>/investigate-email</td><td><span class="method post">POST</span></td><td>Email investigation</td></tr>
+        </table>
+      </section>
+
+      <!-- LIVE DATA -->
+      <section id="livedata">
+        <h2>Live Data / API Keys</h2>
+        <p class="sec-lead">Copy the template and add keys for any services you have. Modules use live data automatically when their key is enabled, and fall back to demo data otherwise.</p>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">config/keys.yaml</span><button class="copy">Copy</button></div>
+<pre><code>services:
+  haveibeenpwned:
+    enabled: <span class="tok-cmd">true</span>
+    api_key: <span class="tok-str">"YOUR_KEY"</span>
+  clearbit:
+    enabled: <span class="tok-cmd">true</span>
+    api_key: <span class="tok-str">"YOUR_KEY"</span></code></pre>
+        </div>
+        <div class="note warn"><span class="ni">🔒</span><div><b>Your secrets stay local.</b> <code>config/keys.yaml</code> is git-ignored, so keys are never committed to the repository.</div></div>
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section id="architecture">
+        <h2>How The Engine Works</h2>
+        <p class="sec-lead">A four-stage pipeline turns raw input into a correlated dossier.</p>
+        <div class="flow">
+          <div class="step"><b>① Input Processor</b><span>Classifies the input type, extracts leads, builds the target profile</span></div>
+          <div class="arrow">↓</div>
+          <div class="step"><b>② Module Execution</b><span>Runs every applicable module for the given input(s)</span>
+            <div class="chips">
+              <span class="chip">face</span><span class="chip">image</span><span class="chip">name</span><span class="chip">social</span><span class="chip">username</span><span class="chip">email</span><span class="chip">phone</span><span class="chip">breach</span><span class="chip">darkweb</span><span class="chip">crypto</span><span class="chip">location</span><span class="chip">network</span><span class="chip">document</span>
+            </div>
+          </div>
+          <div class="arrow">↓</div>
+          <div class="step"><b>③ Correlation Engine</b><span>Builds the identity graph and computes confidence scores</span></div>
+          <div class="arrow">↓</div>
+          <div class="step"><b>④ Report Generator</b><span>Renders a Console / JSON / HTML / PDF dossier</span></div>
+        </div>
+      </section>
+
+      <!-- CONFIDENCE -->
+      <section id="confidence">
+        <h2>Confidence Scoring</h2>
+        <p class="sec-lead">Every finding carries a confidence score based on the strength and independence of its evidence.</p>
+        <table class="tbl">
+          <tr><th>Score</th><th>Meaning</th></tr>
+          <tr><td>0.9 – 1.0</td><td>Certain — verified by multiple independent sources</td></tr>
+          <tr><td>0.7 – 0.9</td><td>High confidence — strong evidence from 2+ sources</td></tr>
+          <tr><td>0.4 – 0.7</td><td>Medium confidence — single source or partial match</td></tr>
+          <tr><td>0.1 – 0.4</td><td>Low confidence — weak match, possible false positive</td></tr>
+          <tr><td>0.0</td><td>No match found</td></tr>
+        </table>
+      </section>
+
+      <!-- STRUCTURE -->
+      <section id="structure">
+        <h2>Project Structure</h2>
+        <div class="code">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><span class="lbl">tree</span><button class="copy">Copy</button></div>
+<pre><code>OmniTrace/
+├── cli.py            <span class="tok-c"># Command-line interface (all subcommands)</span>
+├── api.py            <span class="tok-c"># Flask REST API + dashboard server</span>
+├── config.yaml       <span class="tok-c"># Global configuration</span>
+├── requirements.txt
+│
+├── engine/           <span class="tok-c"># Core pipeline: orchestrator, input, report, correlation</span>
+├── face/  image/     <span class="tok-c"># Face search · EXIF/OCR/reverse-image/objects</span>
+├── name/  social/    <span class="tok-c"># People search · social-media search</span>
+├── username/         <span class="tok-c"># Username checker (+ breach lookup)</span>
+├── email_intel/      <span class="tok-c"># Email investigation</span>
+├── phone/  location/ <span class="tok-c"># Phone lookup · place identification</span>
+├── network/          <span class="tok-c"># WHOIS / DNS / IP reputation</span>
+├── breach/ darkweb/  <span class="tok-c"># Breach search · dark-web search</span>
+├── crypto/ document/ <span class="tok-c"># BTC/ETH tracing · doc metadata & stego</span>
+├── output/           <span class="tok-c"># Dossier renderers (HTML / JSON / PDF)</span>
+└── web/              <span class="tok-c"># Dashboard (dashboard.html + launcher)</span></code></pre>
+        </div>
+      </section>
+
+      <!-- ETHICS -->
+      <section id="ethics">
+        <h2>Ethical Use</h2>
+        <div class="note warn"><span class="ni">⚠️</span><div>OmniTrace aggregates <b>publicly available</b> information only — it does not hack, crack, or bypass authentication. Use it for <b>authorized</b> OSINT, security research, identity-theft monitoring, journalism, or law enforcement with proper authority. <b>Do not</b> use it for stalking, harassment, identity theft, or unauthorized surveillance. You are responsible for complying with all applicable laws.</div></div>
+      </section>
+
+      <!-- LICENSE -->
+      <section id="license">
+        <h2>License</h2>
+        <p class="sec-lead">Released under the <b>MIT License</b>. See the <a href="https://github.com/jojin1709/OmniTrace/blob/main/LICENSE" style="color:var(--accent)">LICENSE</a> file for full terms, including the ethical-use notice.</p>
+        <div class="card" style="text-align:center">
+          <div class="ic" style="margin:0 auto 12px">📜</div>
+          <h4>MIT License · © 2026 JOJIN JOHN</h4>
+          <p>Free to use, modify, and distribute — provided the copyright notice is retained.</p>
+        </div>
+      </section>
+
+      <footer>
+        <p><b>OmniTrace</b> — Universal Identity &amp; Location Trace Engine</p>
+        <p style="margin-top:6px">Crafted with <span class="heart">♥</span> by <b>JOJIN JOHN</b> · MIT License · © 2026</p>
+        <p style="margin-top:10px"><a href="https://github.com/jojin1709/OmniTrace" style="color:var(--accent)" target="_blank" rel="noopener">github.com/jojin1709/OmniTrace</a></p>
+      </footer>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  // Copy buttons
+  document.querySelectorAll('.copy').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const pre=btn.closest('.code').querySelector('pre');
+      const text=pre.innerText;
+      navigator.clipboard.writeText(text).then(()=>{
+        const old=btn.textContent;btn.textContent='✓ Copied';btn.classList.add('done');
+        setTimeout(()=>{btn.textContent=old;btn.classList.remove('done')},1500);
+      });
+    });
+  });
+
+  // Mobile menu
+  const sb=document.getElementById('sidebar'),bd=document.getElementById('backdrop'),mb=document.getElementById('menuBtn');
+  function toggle(o){sb.classList.toggle('open',o);bd.classList.toggle('show',o);}
+  mb.addEventListener('click',()=>toggle(!sb.classList.contains('open')));
+  bd.addEventListener('click',()=>toggle(false));
+  document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>toggle(false)));
+
+  // Scroll-spy
+  const links=[...document.querySelectorAll('.nav a')];
+  const map={};links.forEach(l=>{const id=l.getAttribute('href').slice(1);const el=document.getElementById(id);if(el)map[id]=l;});
+  const spy=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        const l=map[e.target.id];if(l)l.classList.add('active');
+      }
+    });
+  },{rootMargin:'-45% 0px -50% 0px'});
+  Object.keys(map).forEach(id=>{const el=document.getElementById(id);if(el)spy.observe(el);});
+</script>
+</body>
+</html>
